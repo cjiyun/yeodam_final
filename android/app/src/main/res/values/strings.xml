@@ -2,4 +2,9 @@
   <string name="app_name">yeo_dam</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
+  <string name="asset_statements" translatable="false">
+  [{
+    \"include"\: \"https://yeodam.com/.well-known/assetlinks.json\"
+  }]
+</string>
 </resources>

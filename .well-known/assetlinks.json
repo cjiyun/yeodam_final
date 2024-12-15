@@ -1,0 +1,13 @@
+[{
+    "relation": [
+        "delegate_permission/common.handle_all_urls",
+        "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+        "namespace": "android_app",
+        "package_name": "com.yeodam",
+        "sha256_cert_fingerprints": [
+            "35:D7:7B:CA:0C:1B:84:74:C0:A3:6C:9C:C3:C3:F9:B8:DC:07:86:3D:7D:15:FF:A0:6E:E7:35:1E:28:C9:CE:A2"
+        ]
+    }
+}]
