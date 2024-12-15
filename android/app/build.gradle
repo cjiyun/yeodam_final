@@ -81,7 +81,7 @@ def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInRelea
 def jscFlavor = 'org.webkit:android-jsc:+'
 
 android {
-    ndkVersion "26.1.10909125"
+    ndkVersion rootProject.ext.ndkVersion
 
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
@@ -93,11 +93,6 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0.0"
-        manifestPlaceholders = [
-            NAVER_LOGIN_CLIENT_ID: "5hMz2fYMovVFAJ6aPwR6",
-            NAVER_LOGIN_CLIENT_SECRET: "cyl5VqOjtv",
-            NAVER_LOGIN_CLIENT_NAME: "yeodam"
-        ]
     }
     signingConfigs {
         debug {
@@ -153,10 +148,7 @@ android {
 
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
-    implementation "com.facebook.react:react-android"
-    implementation "com.kakao.sdk:v2-user:2.20.6" // 카카오 로그인 API 모듈
-    implementation "androidx.credentials:credentials:1.5.0-alpha05"
-    implementation project(':@react-native-google-signin_google-signin')
+    implementation("com.facebook.react:react-android")
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
