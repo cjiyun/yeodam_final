@@ -1,0 +1,86 @@
+{
+  "expo": {
+    "name": "yeo_dam",
+    "slug": "yeo_dam",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "fonts": {
+      "SCDream3": "./assets/fonts/SCDream3.otf",
+      "SCDream4": "./assets/fonts/SCDream4.otf",
+      "SCDream6": "./assets/fonts/SCDream6.otf",
+      "DunggeunmisoB": "./assets/fonts/DunggeunmisoB.otf"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yeodam"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.yeodam"
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraMavenRepos": [
+              "https://devrepo.kakao.com/nexus/content/groups/public/"
+            ],
+            "newArchEnabled": true
+          },
+          "ios": {
+            "newArchEnabled": true
+          }
+        }
+      ],
+      [
+        "@react-native-kakao/core",
+        {
+          "nativeAppKey": "9ee15697ff1bff6cb85a7e12ed3ab126",
+          "android": {
+            "authCodeHandlerActivity": true
+          },
+          "ios": {
+            "handleOpenURL": true
+          }
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#145C80",
+          "image": "./assets/images/splash.png",
+          "dark": {
+            "image": "./assets/images/splash.png",
+            "backgroundColor": "#145C80"
+          },
+          "imageWidth": 200
+        }
+      ]
+    ],
+    "assetBundlePatterns": [
+      "**/*",
+      "assets/fonts/*"
+    ]
+  }
+}
