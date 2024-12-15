@@ -22,6 +22,30 @@ export default function LoginModal({ visible, onClose, onLoginSuccess }: LoginMo
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      const user = await socialAuth.googleLogin();
+      if (user) {
+        // 로그인 성공 처리
+        onLoginSuccess(user);
+      }
+    } catch (error) {
+      console.error('Google Login failed:', error);
+    }
+  };
+
+  const handleNaverLogin = async () => {
+    try {
+      const user = await socialAuth.naverLogin();
+      if (user) {
+        // 로그인 성공 처리
+        onLoginSuccess(user);
+      }
+    } catch (error) {
+      console.error('Naver Login failed:', error);
+    }
+  };
+
   return (
     <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -39,6 +63,24 @@ export default function LoginModal({ visible, onClose, onLoginSuccess }: LoginMo
             >
               <Image 
                 source={require('../../assets/images/kakao-logo.png')} 
+                style={styles.socialIcon}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.socialButton}
+              onPress={handleGoogleLogin}
+            >
+              <Image 
+                source={require('../../assets/images/google-logo.png')} 
+                style={styles.socialIcon}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.socialButton}
+              onPress={handleNaverLogin}
+            >
+              <Image 
+                source={require('../../assets/images/naver-logo.png')} 
                 style={styles.socialIcon}
               />
             </TouchableOpacity>
