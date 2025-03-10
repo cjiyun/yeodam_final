@@ -9,10 +9,12 @@ import { RootStackParamList } from '../../types/navigation';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-interface ProfileDropDownProps extends AuthStateHandlers {}
+interface ProfileDropDownProps extends AuthStateHandlers {
+  showDropdown: boolean;
+  setShowDropdown: (show: boolean) => void;
+}
 
-export default function ProfileDropDown({ setUserInfo, setIsLoggedIn }: ProfileDropDownProps) {
-  const [showDropdown, setShowDropdown] = useState(false);
+export default function ProfileDropDown({ setUserInfo, setIsLoggedIn, showDropdown, setShowDropdown }: ProfileDropDownProps) {
   const navigation = useNavigation<NavigationProp>();
 
   const handleLogout = async () => {

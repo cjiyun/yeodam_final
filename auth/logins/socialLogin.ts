@@ -1,4 +1,4 @@
-import { login, logout, unlink } from '@react-native-kakao/user';
+import { login, logout, unlink, me } from '@react-native-kakao/user';
 import axios from 'axios';
 import { EXPO_PUBLIC_API_URL } from '@env';
 import { UserProfile } from '../../types/auth';
@@ -12,23 +12,19 @@ const handleSocialLogin = {
   kakaoLogin: async () => {
     try {
       const token = await login();
+      const userInfo = await me();
       
-      const response = await axios.post(`${EXPO_PUBLIC_API_URL}/auth/kakao`, {
-        token
-      });
-
-      // 백엔드가 보내주는 유저 정보 형식
-      if (response.data.user) {
-        const userInfo: UserProfile = {
-          user_id: response.data.user.user_id,    // 'kakao_12345' 형식
-          nickname: response.data.user.nickname,
-          profile_image: response.data.user.profile_image
-        };
-        await AsyncStorage.setItem('accessToken', token.accessToken);
-        await AsyncStorage.setItem('loginType', 'KAKAO');
-        return userInfo;
-      }
-      return null;
+      const profile: UserProfile = {
+        user_id: `kakao_${userInfo.id}`,
+        nickname: userInfo.nickname || '카카오 사용자',
+        profile_image: userInfo.profileImageUrl || ''
+      };
+      
+      await AsyncStorage.setItem('accessToken', token.accessToken);
+      await AsyncStorage.setItem('loginType', 'KAKAO');
+      await AsyncStorage.setItem('userInfo', JSON.stringify(profile));
+      
+      return profile;
     } catch (error) {
       console.error('Kakao Login Error:', error);
       throw error;
@@ -112,7 +108,7 @@ const handleSocialLogin = {
       // 2. 백엔드에 로그아웃 알림
       await axios.post(`${EXPO_PUBLIC_API_URL}/auth/logout`);
       
-      // 3. 로컬 스토리지 클리어
+      // 3. 로컬 스��리지 클리어
       await AsyncStorage.removeItem('accessToken');
       await AsyncStorage.removeItem('loginType');
       

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Image } from 'react-native';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginModal from '../auth/modals/LoginModal';
 import { UserProfile } from '../types/auth';
@@ -11,8 +11,10 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function Header() {
   const { user, setUser } = useAuth();
+  const navigation = useNavigation();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const isFocused = useIsFocused();
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     if (!isFocused) {
@@ -45,10 +47,23 @@ export default function Header() {
       </View>
 
       {user ? (
-        <ProfileDropDown 
-          setUserInfo={setUser}
-          setIsLoggedIn={() => setUser(null)}
-        />
+        <View>
+          <TouchableOpacity 
+            style={styles.profileContainer}
+            onPress={() => setShowDropdown(true)}
+          >
+            <Image 
+              source={user.profile_image ? { uri: user.profile_image } : require('../assets/images/default-profile.png')} 
+              style={styles.profileImage} 
+            />
+          </TouchableOpacity>
+          <ProfileDropDown 
+            setUserInfo={setUser}
+            setIsLoggedIn={() => setUser(null)}
+            showDropdown={showDropdown}
+            setShowDropdown={setShowDropdown}
+          />
+        </View>
       ) : (
         <TouchableOpacity 
           style={styles.loginButton}
@@ -109,5 +124,16 @@ const styles = StyleSheet.create({
     ...typography.regular,
     color: '#ffffff',
     fontSize: 14,
+  },
+  profileContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
 });

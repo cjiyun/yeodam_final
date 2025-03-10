@@ -5,7 +5,14 @@ export interface destination {
   address?: string;       // nullable
   description?: string;   // nullable
   image?: any;         // nullable
+  nearbyRestaurants?: any;
+  rating: number; 
 } 
+
+export interface NearbyRestaurant {
+  name: string;
+  image: any;
+}
 
 export interface destination_keywords {
   dest_id: string;

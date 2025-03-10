@@ -8,26 +8,19 @@ import { typography } from '../../../styles/typography';
 import { RootStackParamList } from '../../../types/navigation';
 import NearbyRestaurants from './nearbyRestaurant';
 import DestinationReviewSection from '../review/destinationReview';
-import Rating from '../rating/displayRating';
-import axios from 'axios';
-import { EXPO_PUBLIC_API_URL } from '@env';
-import { useGoogleRating } from '../rating/getGoogleRating';
-import { ActivityIndicator } from 'react-native';
-import ReviewForm from '../review/reviewForm';
-import { useReviews } from '../review/getReviews';
+import { mockDestinationsKeywords, mockCategories } from '../../../constants/mockData';
 const { width } = Dimensions.get('window');
 
 export default function DestinationScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'destination'>>();
   const { dest_id } = route.params;
-  const destination = mockDestinations.find(d => d.dest_id === dest_id);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
   const [keywords, setKeywords] = useState<string[]>([]);
-  const { isLoading, error, googleRating, fetchGoogleRating } = useGoogleRating('destinations', dest_id);
-  const [reviews, setReviews] = useState([]);
+  
+  const destination = mockDestinations.find(d => d.dest_id === dest_id);
 
   // 제목 설정
   useEffect(() => {
@@ -51,17 +44,16 @@ export default function DestinationScreen() {
   }, [currentImageIndex]);
 
   useEffect(() => {
-    const fetchKeywords = async () => {
-      // destination_keywords와 category 테이블을 조인하여 키워드 이름들을 가져옴
-      const response = await axios.get(`${EXPO_PUBLIC_API_URL}/destinations/${dest_id}/keywords`);
-      setKeywords(response.data);
-    };
-    fetchKeywords();
-  }, [dest_id]);
+    // mockDestinationsKeywords와 mockCategories를 사용하여 키워드 가져오기
+    const destinationKeywords = mockDestinationsKeywords
+      .filter(dk => dk.dest_id === dest_id)
+      .map(dk => {
+        const category = mockCategories.find(c => c.keyword_id === dk.keyword_id);
+        return category?.keyword_name || '';
+      })
+      .filter(keyword => keyword !== '');
 
-  // Google Places API에서 평점 가져오기
-  useEffect(() => {
-    fetchGoogleRating();
+    setKeywords(destinationKeywords);
   }, [dest_id]);
 
   if (!destination) {
@@ -116,16 +108,19 @@ export default function DestinationScreen() {
       </View>
 
       {/* Google 평점 섹션 */}
-      {isLoading ? (
-        <ActivityIndicator size="small" color="#0000ff" />
-      ) : error ? (
-        <Text style={styles.errorText}>{error}</Text>
-      ) : googleRating && (
-        <Rating 
-          rating={googleRating.rating} 
-          count={googleRating.count} 
-        />
-      )}
+      <View style={styles.ratingContainer}>
+        <Text style={styles.ratingScore}>{destination.rating}</Text>
+        <View style={styles.starContainer}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <AntDesign
+              key={star}
+              name={star <= destination.rating ? "star" : "staro"}
+              size={16}
+              color="#FFD700"
+            />
+          ))}
+        </View>
+      </View>
 
       <ScrollView style={styles.content}>
         <View style={styles.titleContainer}>
@@ -163,12 +158,6 @@ export default function DestinationScreen() {
 
         {/* 리뷰 섹션 */}
         <DestinationReviewSection destId={dest_id} />
-
-        <ReviewForm 
-          type="destination" 
-          id={dest_id} 
-          onSuccess={useReviews('destinations', dest_id).fetchReviews} 
-        />
       </ScrollView>
     </ScrollView>
   );
@@ -294,5 +283,19 @@ const styles = StyleSheet.create({
     color: 'red',
     padding: 16,
     textAlign: 'center'
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  ratingScore: {
+    ...typography.bold,
+    fontSize: 18,
+    marginRight: 8,
+  },
+  starContainer: {
+    flexDirection: 'row',
+    marginRight: 8,
   },
 });

@@ -1,3 +1,5 @@
+import { destination, NearbyRestaurant } from './typeInterfaces';
+
 export type RootStackParamList = {
   Home: undefined;
   search: undefined;
@@ -11,4 +13,12 @@ export type RootStackParamList = {
   settings: undefined;
   MytripPage: undefined;
   TabNavigator: undefined;
+  destinationList: {
+    keyword: string;
+    destinations: destination[];
+  };
+  restaurantList: {
+    destId: string;
+    restaurants: NearbyRestaurant[];
+  };
 }; 

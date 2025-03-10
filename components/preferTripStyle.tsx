@@ -4,10 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import axios from 'axios';
-import { EXPO_PUBLIC_API_URL } from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showToastMessage } from '../common/utils';
 import { category } from '../types/typeInterfaces';
+import { mockCategories } from '../constants/mockData';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -19,16 +19,7 @@ export default function PreferTripStyle() {
 
     // 키워드 목록 가져오기
     useEffect(() => {
-        const fetchKeywords = async () => {
-            try {
-                const response = await axios.get(`${EXPO_PUBLIC_API_URL}/categories`);
-                setKeywords(response.data);
-            } catch (error) {
-                console.error('키워드 로딩 실패:', error);
-                showToastMessage('키워드를 불러오는데 실패했습니다');
-            }
-        };
-        fetchKeywords();
+        setKeywords(mockCategories);
     }, []);
 
     // 키워드 선택/해제 처리
@@ -61,9 +52,11 @@ export default function PreferTripStyle() {
                     text: '확인',
                     onPress: async () => {
                         try {
-                            await axios.put(`${EXPO_PUBLIC_API_URL}/users/${user?.user_id}/keywords`, {
-                                keywords: selectedKeywords
-                            });
+                            // AsyncStorage에 저장
+                            await AsyncStorage.setItem(
+                                `userKeywords_${user?.user_id}`, 
+                                JSON.stringify(selectedKeywords)
+                            );
                             showToastMessage('선호 스타일이 저장되었습니다');
                             navigation.replace('Home');
                         } catch (error) {

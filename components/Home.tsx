@@ -5,86 +5,96 @@ import { Dimensions } from 'react-native';
 import { commonStyles } from '../styles/commonStyles';
 import { typography } from '../styles/typography';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { destination } from '../types/typeInterfaces';
+import { destination, destination_keywords } from '../types/typeInterfaces';
 import { RootStackParamList } from '../types/navigation';
 import { AntDesign } from '@expo/vector-icons';
-import { handleWishClick, useWishListStatus } from './wish/wishListProcess';
+import { handleWishClick, getWishList } from './wish/wishListProcess';
 import { showToastMessage } from '../common/utils';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
-import { EXPO_PUBLIC_API_URL } from '@env';
+import { mockTopRatedDestinations, mockDestinations, mockCategories, mockDestinationsKeywords } from '../constants/mockData';
 import Header from './Header';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function HomeScreen() {
-  const navigation = useNavigation<NavigationProp>();
+  // 1. Navigation & Context Hooks
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user } = useAuth();
+
+  // 2. State Hooks
   const [banners, setBanners] = useState<destination[]>([]);
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<Record<string, destination[]>>({});
+  const [destinations] = useState(mockDestinations);
+  const [selectedKeyword, setSelectedKeyword] = useState<string>('');
+  const [filteredDestinations, setFilteredDestinations] = useState(destinations);
+  const [wishListItems, setWishListItems] = useState<string[]>([]);
 
-  // 상위 평점 5개 관광지 가져오기
+  // 3. Effects
   useEffect(() => {
-    const fetchTopRatedDestinations = async () => {
-      try {
-        // 평점 높은 상위 5개 관광지 요청
-        const response = await axios.get(`${EXPO_PUBLIC_API_URL}/destinations/top-rated`);
-        setBanners(response.data);
-      } catch (error) {
-        console.error('상위 평점 관광지 로딩 실패:', error);
-      }
-    };
-    fetchTopRatedDestinations();
+    setBanners(mockTopRatedDestinations);
   }, []);
 
-  // 추천 데이터 가져오기
   useEffect(() => {
-    const fetchRecommendations = async () => {
-      try {
-        // 로그인한 경우: 개인화된 추천
-        if (user?.user_id) {
-          const response = await axios.get(
-            `${EXPO_PUBLIC_API_URL}/recommendations/user/${user.user_id}`
-          );
-          setRecommendations({
-            "추천 관광지": response.data
+    const purposeKeywords = mockCategories
+      .filter(category => category.category_id === '2')
+      .map(category => category.keyword_name);
+
+    const recommendationsByPurpose = purposeKeywords.reduce((acc, keyword) => ({
+      ...acc,
+      [keyword]: mockDestinations.filter(dest => 
+        mockDestinationsKeywords
+          .filter(dk => dk.keyword_id === mockCategories.find(c => c.keyword_name === keyword)?.keyword_id)
+          .some(dk => dk.dest_id === dest.dest_id)
+      )
+    }), {});
+
+    setRecommendations(recommendationsByPurpose);
+    setSelectedKeywords(purposeKeywords);
+  }, []);
+
+  useEffect(() => {
+    if (selectedKeyword) {
+      const filtered = destinations.filter(dest => {
+        const keywords = mockDestinationsKeywords
+          .filter(dk => dk.dest_id === dest.dest_id)
+          .map(dk => {
+            const category = mockCategories.find(c => c.keyword_id === dk.keyword_id);
+            return category?.keyword_name;
           });
-          setSelectedKeywords(["추천 관광지"]);
-        } 
-        // 비로그인: count 높은 키워드별 관광지 표시
-        else {
-          // 1. count 기준 상위 키워드 5개와 해당 키워드의 관광지들 가져오기
-          const response = await axios.get(
-            `${EXPO_PUBLIC_API_URL}/destinations/popular-keywords`
-          );
-          
-          // response.data 형태:
-          // {
-          //   keywords: ['힐링', '관광', '자연' ...],
-          //   destinations: {
-          //     '힐링': [{dest_id, dest_name, image...}],
-          //     '관광': [{dest_id, dest_name, image...}],
-          //     '자연': [{dest_id, dest_name, image...}]
-          //   }
-          // }
-          
-          setRecommendations(response.data.destinations);
-          setSelectedKeywords(response.data.keywords);
-        }
-      } catch (error) {
-        console.error('추천 데이터 로딩 실패:', error);
+        return keywords.includes(selectedKeyword);
+      });
+      setFilteredDestinations(filtered);
+    } else {
+      setFilteredDestinations(destinations);
+    }
+  }, [selectedKeyword, destinations]);
+
+  useEffect(() => {
+    const fetchWishList = async () => {
+      if (user?.user_id) {
+        const list = await getWishList(user.user_id);
+        setWishListItems(list.dest_list || []);
       }
     };
-    fetchRecommendations();
-  }, [user]);
+    fetchWishList();
+  }, [user?.user_id]);
 
   const { width } = Dimensions.get('window');
 
   // 추천 관광지 클릭 핸들러
-  const handleRecommendClick = (destination: destination) => {
-    navigation.navigate('destination', { 
-      dest_id: destination.dest_id
-    });
+  const handleDestinationPress = (destId: string) => {
+    navigation.navigate('destination', { dest_id: destId });
+  };
+
+  const handleWishButtonClick = async (destId: string) => {
+    if (!user?.user_id) {
+      showToastMessage('로그인 후에 사용 가능합니다');
+      return;
+    }
+    await handleWishClick(destId, user.user_id);
+    // 찜 목록 즉시 업데이트
+    const newList = await getWishList(user.user_id);
+    setWishListItems(newList.dest_list || []);
   };
 
   const BannerSection = () => {
@@ -160,7 +170,7 @@ export default function HomeScreen() {
                 })}
                 activeOpacity={1}
               >
-                <Image source={banner.image} style={styles.mainBannerImage} />
+                <Image source={banner.image[0]} style={styles.mainBannerImage} />
                 <Text style={styles.bannerTitle}>{banner.dest_name}</Text>
               </TouchableOpacity>
             ))}
@@ -182,34 +192,31 @@ export default function HomeScreen() {
           {selectedKeywords.length > 0 ? (
             selectedKeywords.map((keyword) => (
               <View key={keyword} style={styles.recommendSection}>
-                <Text style={styles.recommendTitle}>#{keyword}</Text>
+                <View style={styles.recommendHeader}>
+                  <Text style={styles.recommendTitle}>#{keyword}</Text>
+                </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {recommendations[keyword]?.map((destination) => {
-                    const isWished = user?.user_id ? useWishListStatus(user.user_id, destination.dest_id) : false;
-                    return (
-                      <TouchableOpacity 
-                        key={destination.dest_id} 
-                        style={styles.recommendItem}
-                        onPress={() => handleRecommendClick(destination)}
-                      >
-                        <Pressable onPress={() => {
-                          if (!user?.user_id) {
-                            showToastMessage('로그인 후에 사용 가능합니다');
-                            return;
-                          }
-                          handleWishClick(destination.dest_id, user.user_id);
-                        }}>                            
+                  {recommendations[keyword]?.map((destination) => (
+                    <TouchableOpacity 
+                      key={destination.dest_id} 
+                      style={styles.recommendItem}
+                      onPress={() => handleDestinationPress(destination.dest_id)}
+                    >
+                      <View style={styles.wishButtonContainer}>
+                        <Pressable 
+                          onPress={() => handleWishButtonClick(destination.dest_id)}
+                        >
                           <AntDesign 
-                            name={isWished ? "heart" : "hearto"} 
+                            name={wishListItems.includes(destination.dest_id) ? "heart" : "hearto"} 
                             size={30} 
-                            color={isWished ? "#eb4b4b" : "#999"} 
+                            color={wishListItems.includes(destination.dest_id) ? "#eb4b4b" : "#3d3d3d"} 
                           />
                         </Pressable>
-                        <Image source={destination.image} style={styles.destinationImage} />
-                        <Text style={styles.destinationName}>{destination.dest_name}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                      </View>
+                      <Image source={destination.image[0]} style={styles.destinationImage} />
+                      <Text style={styles.destinationName}>{destination.dest_name}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </ScrollView>
               </View>
             ))
@@ -321,5 +328,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginTop: 50,
+  },
+  recommendHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  moreButton: {
+    padding: 8,
+  },
+  moreButtonText: {
+    ...typography.regular,
+    color: '#666',
+    fontSize: 14,
+  },
+  wishButtonContainer: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+    zIndex: 1,
+    borderRadius: 15,
+    padding: 5,
   },
 });

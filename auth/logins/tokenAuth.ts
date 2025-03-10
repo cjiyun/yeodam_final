@@ -1,24 +1,25 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import { EXPO_PUBLIC_API_URL } from '@env';
 
 const tokenAuth = {
-  // 토큰 확인 및 사용자 인증
   verifyToken: async () => {
     try {
-      const token = await AsyncStorage.getItem('user_token');
-      if (token) {
-        const response = await axios.get(`${EXPO_PUBLIC_API_URL}/auth/verify`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        return response.data;
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      const loginType = await AsyncStorage.getItem('loginType');
+      const userInfoStr = await AsyncStorage.getItem('userInfo');
+
+      if (accessToken && loginType && userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        return {
+          isValid: true,
+          user: userInfo
+        };
       }
       return null;
     } catch (error) {
       console.error('토큰 유효성 검사 실패:', error);
-      await AsyncStorage.removeItem('user_token');
+      await AsyncStorage.removeItem('accessToken');
+      await AsyncStorage.removeItem('loginType');
+      await AsyncStorage.removeItem('userInfo');
       return null;
     }
   }

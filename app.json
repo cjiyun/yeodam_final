@@ -8,9 +8,9 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/splash2.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#336CB1"
     },
     "fonts": {
       "SCDream3": "./assets/fonts/SCDream3.otf",
@@ -71,11 +71,11 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#145C80",
-          "image": "./assets/images/splash.png",
+          "backgroundColor": "#336CB1",
+          "image": "./assets/images/splash2.png",
           "dark": {
-            "image": "./assets/images/splash.png",
-            "backgroundColor": "#145C80"
+            "image": "./assets/images/splash2.png",
+            "backgroundColor": "#336CB1"
           },
           "imageWidth": 200
         }

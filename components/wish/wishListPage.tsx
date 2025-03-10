@@ -6,14 +6,26 @@ import { AntDesign } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
-import axios from 'axios';
-import { EXPO_PUBLIC_API_URL } from '@env';
 import { destination } from '../../types/typeInterfaces';
 import { showToastMessage } from '../../common/utils';
 import { typography } from '../../styles/typography';
 import Header from '../../components/Header';
 import { commonStyles } from '../../styles/commonStyles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { mockDestinations } from '../../constants/mockData';
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+const IMAGE_MAPPING: { [key: string]: any } = {
+  '1': require('../../assets/images/N-Seoul-tower.jpeg'),
+  '2': require('../../assets/images/jeonju.jpeg'),
+  '3': require('../../assets/images/pubao.png'),
+  '4': require('../../assets/images/nam2.png'),
+  '5': require('../../assets/images/sulak.png'),
+  '6': require('../../assets/images/toham.png'),
+  '7': require('../../assets/images/hadong.png'),
+  '8': require('../../assets/images/kanu.png'),
+};
 
 export default function WishListPage() {
     const { user } = useAuth();
@@ -29,14 +41,10 @@ export default function WishListPage() {
 
         try {
             const wishList = await getWishList(user.user_id);
-            // 찜한 관광지들의 상세 정보 가져오기
-            const destinations = await Promise.all(
-                wishList.map(async (destId) => {
-                    const response = await axios.get(`${EXPO_PUBLIC_API_URL}/destinations/${destId}`);
-                    return response.data;
-                })
+            const wishedDestinations = mockDestinations.filter(dest => 
+                wishList.dest_list.includes(dest.dest_id)
             );
-            setWishListItems(destinations);
+            setWishListItems(wishedDestinations);
         } catch (error) {
             console.error('찜 목록 로딩 실패:', error);
             showToastMessage('찜 목록을 불러오는데 실패했습니다');
@@ -69,33 +77,36 @@ export default function WishListPage() {
     }
 
     return (
-      <View style={styles.container}>
-        <Header />
-        <FlatList
-          data={wishListItems}
-          keyExtractor={(item) => item.dest_id}
-          renderItem={({ item }) => (
-            <Pressable 
-              style={styles.itemContainer}
-              onPress={() => handleDestinationClick(item)}
-            >
-              <Image source={item.image} style={styles.image} />
-              <View style={styles.infoContainer}>
-                <Text style={styles.name}>{item.dest_name}</Text>
-                <Pressable 
-                  style={styles.wishButton}
-                  onPress={() => handleWishRemove(item.dest_id)}
-                >
-                  <AntDesign name="heart" size={24} color="#eb4b4b" />
-                </Pressable>
-              </View>
-            </Pressable>
-          )}
-          ListEmptyComponent={
-            <Text style={styles.message}>찜한 여행지가 없습니다</Text>
-          }
-        />
-      </View>
+        <View style={styles.container}>
+            <Header />
+            <FlatList
+                data={wishListItems}
+                keyExtractor={(item) => item.dest_id}
+                renderItem={({ item }) => (
+                    <Pressable 
+                        style={styles.itemContainer}
+                        onPress={() => handleDestinationClick(item)}
+                    >
+                        <Image 
+                            source={IMAGE_MAPPING[item.dest_id] || require('../../assets/images/default-image.jpeg')}
+                            style={styles.image}
+                        />
+                        <View style={styles.infoContainer}>
+                            <Text style={styles.name}>{item.dest_name}</Text>
+                            <Pressable 
+                                style={styles.wishButton}
+                                onPress={() => handleWishRemove(item.dest_id)}
+                            >
+                                <AntDesign name="heart" size={24} color="#eb4b4b" />
+                            </Pressable>
+                        </View>
+                    </Pressable>
+                )}
+                ListEmptyComponent={
+                    <Text style={styles.message}>찜한 여행지가 없습니다</Text>
+                }
+            />
+        </View>
     );
 }
 

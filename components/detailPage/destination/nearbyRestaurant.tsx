@@ -5,62 +5,43 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../types/navigation';
 import { restaurant } from '../../../types/typeInterfaces';
 import { useAuth } from '../../../contexts/AuthContext';
-import axios from 'axios';
-import { EXPO_PUBLIC_API_URL } from '@env';
+import { mockDestinations } from '../../../constants/mockData';
+import { NearbyRestaurant } from '../../../types/typeInterfaces';
 
 const { width } = Dimensions.get('window');
 
 export default function NearbyRestaurants({ destId }: { destId: string }) {
+  const destination = mockDestinations.find(d => d.dest_id === destId);
+  const nearbyRestaurants = destination?.nearbyRestaurants || [];
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { user } = useAuth();
-  const [restaurants, setRestaurants] = useState<restaurant[]>([]);
-
-  // 근방 맛집 목록 가져오기
-  useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        const response = await axios.get(
-          `${EXPO_PUBLIC_API_URL}/destinations/${destId}/restaurants`
-        );
-        setRestaurants(response.data);
-      } catch (error) {
-        console.error('맛집 데이터 로딩 실패:', error);
-      }
-    };
-    fetchRestaurants();
-  }, [destId]);
 
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>근방 맛집</Text>
         <TouchableOpacity 
-          onPress={() => navigation.navigate('restaurant', { rest_id: restaurants[0].rest_id })}
+          onPress={() => navigation.navigate('restaurantList', { 
+            destId,
+            restaurants: nearbyRestaurants 
+          })}
+          style={styles.moreButton}
         >
-          <Text style={styles.moreButton}>더보기</Text>
+          <Text style={styles.moreButtonText}>더보기</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        style={styles.restaurantsContainer}
-      >
-        {restaurants.slice(0, 5).map((restaurant) => (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {nearbyRestaurants.map((restaurant: NearbyRestaurant, index: number) => (
           <TouchableOpacity 
-            key={restaurant.rest_id}
+            key={index}
             style={styles.restaurantCard}
-            onPress={() => navigation.navigate('restaurant', { 
-              rest_id: restaurant.rest_id 
-            })}
           >
             <Image 
-              source={{ uri: restaurant.image }} 
+              source={restaurant.image}  // require로 불러온 이미지 사용
               style={styles.restaurantImage} 
             />
             <View style={styles.restaurantInfo}>
-              <Text style={styles.restaurantName}>{restaurant.rest_name}</Text>
-              <Text style={styles.restaurantContact}>{restaurant.contact}</Text>
+              <Text style={styles.restaurantName}>{restaurant.name}</Text>
             </View>
           </TouchableOpacity>
         ))}
@@ -84,7 +65,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   moreButton: {
-    color: '#007AFF',
+    padding: 8,
+    paddingBottom: 0,
+  },
+  moreButtonText: {
+    color: '#666',
+    fontSize: 14,
   },
   restaurantsContainer: {
     marginTop: 8,
@@ -92,6 +78,7 @@ const styles = StyleSheet.create({
   restaurantCard: {
     width: width * 0.6,
     marginRight: 16,
+    marginBottom: 5,
     borderRadius: 8,
     backgroundColor: 'white',
     shadowColor: '#000',
